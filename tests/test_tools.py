@@ -49,3 +49,29 @@ def test_cvec_non_boursier_refuse(session):
 def test_budget(session):
     r = calcul_budget(session, {"bourse": 458.7, "job": 300, "apl": 180}, {"loyer": 520, "courses": 200})
     assert r["reste_a_vivre"] == 218.7
+
+
+def test_budget_format_liste(session):
+    r = calcul_budget(session, [{"libelle": "bourse", "montant": 458.7}, {"libelle": "job", "montant": 300},
+                                {"libelle": "apl", "montant": 180}],
+                      [{"libelle": "loyer", "montant": 520}, {"libelle": "courses", "montant": 200}])
+    assert r["reste_a_vivre"] == 218.7
+
+
+def test_schemas_sans_objet_libre():
+    """Gemini refuse les objets sans 'properties' et les 'additionalProperties'."""
+    import json
+    from src.tools import openai_tools
+    txt = json.dumps(openai_tools())
+    assert "additionalProperties" not in txt
+    def walk(s):
+        if isinstance(s, dict):
+            if s.get("type") == "object":
+                assert s.get("properties"), s
+            for v in s.values():
+                walk(v)
+        elif isinstance(s, list):
+            for v in s:
+                walk(v)
+    for t in openai_tools():
+        walk(t["function"]["parameters"])

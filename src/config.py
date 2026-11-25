@@ -17,6 +17,7 @@ LLM_BASE_URL = os.getenv("LLM_BASE_URL", "http://localhost:11434/v1")
 LLM_API_KEY = os.getenv("LLM_API_KEY", "ollama")
 LLM_MODEL = os.getenv("LLM_MODEL", "qwen2.5:7b-instruct")
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0"))
+LLM_REASONING_EFFORT = os.getenv("LLM_REASONING_EFFORT", "")  # ex. "low" pour Gemini (plus rapide)
 
 # Recherche
 RETRIEVER = os.getenv("RETRIEVER", "hybrid")  # "hybrid" (dense + BM25) ou "bm25"

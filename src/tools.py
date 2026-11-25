@@ -117,12 +117,19 @@ def verifier_eligibilite_bourse(session: Session, revenu_brut_global: float, age
     return result
 
 
-def calcul_budget(session: Session, revenus: dict, depenses: dict) -> dict:
+def _montants(postes) -> list[float]:
+    """Accepte une liste [{"libelle", "montant"}] (format de l'outil) ou un dict {libelle: montant}."""
+    if isinstance(postes, dict):
+        return [float(v) for v in postes.values()]
+    return [float(p["montant"]) for p in postes]
+
+
+def calcul_budget(session: Session, revenus, depenses) -> dict:
     try:
-        total_r = round(sum(float(v) for v in revenus.values()), 2)
-        total_d = round(sum(float(v) for v in depenses.values()), 2)
-    except (TypeError, ValueError):
-        raise ToolError("Les montants doivent être des nombres (euros par mois).")
+        total_r = round(sum(_montants(revenus)), 2)
+        total_d = round(sum(_montants(depenses)), 2)
+    except (TypeError, ValueError, KeyError):
+        raise ToolError("Format attendu : listes de {libelle, montant}, montants en euros par mois.")
     result = {"total_revenus": total_r, "total_depenses": total_d,
               "reste_a_vivre": round(total_r - total_d, 2)}
     session.budgets.append(result)
@@ -169,8 +176,12 @@ def envoyer_demande(session: Session, type_demande: str, nom: str, details: dict
 
 
 # ---------------------------------------------------------------------------
-# Schémas JSON exposés au modèle
+# Schémas JSON exposés au modèle (pas d'objet « libre » : Gemini les refuse)
 # ---------------------------------------------------------------------------
+_POSTE = {"type": "object", "properties": {
+    "libelle": {"type": "string"}, "montant": {"type": "number"}},
+    "required": ["libelle", "montant"]}
+
 TOOL_SPECS = {
     "rechercher_documents": {
         "effet": "lecture",
@@ -199,10 +210,10 @@ TOOL_SPECS = {
         "effet": "lecture",
         "description": "Calcule le reste à vivre mensuel à partir des revenus et dépenses mensuels.",
         "parameters": {"type": "object", "properties": {
-            "revenus": {"type": "object", "description": "ex. {\"bourse\": 458.7, \"job\": 300}",
-                        "additionalProperties": {"type": "number"}},
-            "depenses": {"type": "object", "description": "ex. {\"loyer\": 520}",
-                         "additionalProperties": {"type": "number"}}},
+            "revenus": {"type": "array", "description": "Revenus mensuels, ex. bourse, job, APL",
+                        "items": _POSTE},
+            "depenses": {"type": "array", "description": "Dépenses mensuelles, ex. loyer, courses",
+                         "items": _POSTE}},
             "required": ["revenus", "depenses"]},
     },
     "generer_courrier": {
@@ -222,7 +233,10 @@ TOOL_SPECS = {
         "parameters": {"type": "object", "properties": {
             "type_demande": {"type": "string", "enum": sorted(TYPES_DEMANDE)},
             "nom": {"type": "string"},
-            "details": {"type": "object"}},
+            "details": {"type": "object", "properties": {
+                "ville": {"type": "string", "description": "Ville souhaitée (logement_crous)"},
+                "boursier": {"type": "boolean", "description": "L'étudiant est-il boursier ? (remboursement_cvec)"},
+                "commentaire": {"type": "string"}}}},
             "required": ["type_demande", "nom"]},
     },
 }
