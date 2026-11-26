@@ -11,7 +11,23 @@ repas à 1 €) et qui peut monter une demande, construit en 4 niveaux mesurés 
 
 ## Résultats
 
-Tableau produit par `python eval.py` (voir `results/tableau.md`) — à compléter après l'évaluation finale.
+Tableau produit par `python eval.py` sur les 42 cas de `data/tests.jsonl`
+(modèle `gemini-3.5-flash-lite`, température 0 ; détail par cas dans `results/`).
+
+| Niveau | Recall@5 | MRR | Exactitude | Citation | Abstention | Précision/refus | Succès tâches | pass^3 | Tokens / requête | Latence (s) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 0 · LLM seul | — | — | 55 % | — | 60 % | 100 % | — | — | 159 | 3,65 |
+| 1 · RAG | 100 % | 0,94 | 95 % | 91 % | 100 % | 100 % | — | — | 680 | 4,23 |
+| 2 · Agent | 100 % | 0,94 | 100 % | 95 % | 100 % | 100 % | 100 % | 100 % | 2 904 | 7,59 |
+| 3 · Agent + reranking | _en cours_ | | | | | | | | | |
+
+**À retenir**
+- Le **RAG** fait passer l'exactitude de 55 % à 95 % et l'abstention de 60 % à 100 % : sans documents,
+  le modèle donne des montants périmés (ex. CVEC à 103 € au lieu de 105 €) et n'en cite aucune source.
+- L'**agent** atteint 100 % et réussit les 10 tâches de façon stable (pass^3 = 100 %), au prix de
+  ~4 fois plus de tokens que le RAG et d'une latence environ 2 fois plus élevée.
+- La seule erreur du RAG (« J'étudie en Guadeloupe… ») vient d'un écart de vocabulaire avec la fiche
+  (« outre-mer ») ; l'agent la corrige en reformulant sa recherche.
 
 | Niveau | Contenu |
 |---|---|
