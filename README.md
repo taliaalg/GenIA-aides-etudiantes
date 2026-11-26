@@ -115,3 +115,12 @@ Les résultats bruts par niveau sont dans `results/`, les traces dans `logs/`.
 Fiches rédigées par l'équipe à partir des informations officielles (2026-2027) :
 service-public.fr, etudiant.gouv.fr, lescrous.fr, cvec.etudiant.gouv.fr, caf.fr,
 actionlogement.fr / visale.fr. La source de chaque fiche est indiquée en tête de fichier.
+
+## Équipe
+
+Projet réalisé par **Julia Ezzedine** et **Talia Toutah** (ECE Paris, Section 2).
+
+| Membre | Contributions |
+|---|---|
+| Talia Toutah | Mise en place du dépôt et de l'environnement, intégration du LLM (Gemini), évaluation des 4 niveaux, interface Streamlit |
+| Julia Ezzedine | Vérification du corpus (bourses, CVEC), analyse des échecs, rapport et vidéo |
