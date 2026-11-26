@@ -58,7 +58,10 @@ class Agent:
         try:
             args = json.loads(call["arguments"] or "{}")
             if name == "rechercher_documents":
-                chunks = self.retriever.search(args["requete"])
+                requete = args["requete"]
+                if isinstance(requete, list):  # certains modèles envoient une liste de mots-clés
+                    requete = " ".join(map(str, requete))
+                chunks = self.retriever.search(str(requete))
                 run.sources.extend(c.doc_id for c in chunks)
                 result = "\n\n".join(c.as_context() for c in chunks)
             elif name in IMPLEMENTATIONS:
@@ -66,8 +69,8 @@ class Agent:
             else:
                 raise ToolError(f"Outil inconnu : {name}")
             ok = True
-        except (ToolError, TypeError, KeyError, json.JSONDecodeError) as e:
-            result, ok = f"ERREUR: {e}", False
+        except Exception as e:  # toute erreur d'outil est renvoyée au modèle, jamais de plantage
+            result, ok = f"ERREUR ({type(e).__name__}): {e}", False
         run.steps.append({"type": "tool", "name": name, "arguments": call["arguments"],
                           "ok": ok, "result": result[:500],
                           "duree_s": round(time.perf_counter() - t0, 3)})

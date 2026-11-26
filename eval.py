@@ -16,6 +16,7 @@ from pathlib import Path
 from src import config
 from src.levels import LEVELS
 from src.rag import Retriever
+from src.tools import Session
 from src.tracing import log_trace
 
 ABSTENTION_MARKERS = ["je ne sais pas", "ne trouve pas", "ne contiennent pas", "ne contient pas",
@@ -99,6 +100,14 @@ def grade(case: dict, res: dict, level: int) -> dict:
     t = case["type"]
     out = {"id": case["id"], "type": t}
     ans = res["answer"]
+    if res.get("status") == "error":  # un plantage n'est jamais compté comme une réussite
+        key = {"doc": "exact", "absent": "abstention", "ambigu": "precision_ou_refus", "tache": "succes"}[t]
+        out[key] = False
+        if t == "doc":
+            out["cite_source"] = False if level >= 1 else None
+        if t == "tache":
+            out["motif"] = "erreur d'exécution"
+        return out
     if t == "doc":
         out["exact"] = contains_all(ans, case["doit_contenir"]) and not is_abstention(ans)
         out["cite_source"] = any(s in res["sources"] for s in case["sources_attendues"]) if level >= 1 else None
@@ -122,7 +131,13 @@ def grade(case: dict, res: dict, level: int) -> dict:
 def run_case(level_obj, level: int, case: dict) -> dict:
     confirm = (lambda call: case.get("confirmer", False))
     workdir = tempfile.mkdtemp(prefix=f"eval-{case['id']}-")
-    res = level_obj.answer(case["question"], confirm=confirm, workdir=workdir)
+    try:
+        res = level_obj.answer(case["question"], confirm=confirm, workdir=workdir)
+    except Exception as e:  # un cas qui plante (API indisponible…) compte comme un échec
+        print(f"  {case['id']:<10} ERREUR {type(e).__name__}: {e}")
+        res = {"answer": f"ERREUR {type(e).__name__}", "sources": [], "retrieved": [], "tokens": 0,
+               "latency_s": 0.0, "llm_calls": 0, "steps": [], "status": "error",
+               "session": Session(Path(workdir)) if level >= 2 else None}
     log_trace(level, case["question"], res, test_id=case["id"], filename=f"traces_eval_niveau{level}.jsonl")
     return res
 
