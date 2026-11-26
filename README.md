@@ -19,7 +19,7 @@ Tableau produit par `python eval.py` sur les 42 cas de `data/tests.jsonl`
 | 0 · LLM seul | — | — | 55 % | — | 60 % | 100 % | — | — | 159 | 3,65 |
 | 1 · RAG | 100 % | 0,94 | 95 % | 91 % | 100 % | 100 % | — | — | 680 | 4,23 |
 | 2 · Agent | 100 % | 0,94 | 100 % | 95 % | 100 % | 100 % | 100 % | 100 % | 2 904 | 7,59 |
-| 3 · Agent + reranking | _en cours_ | | | | | | | | | |
+| 3 · Agent + reranking | 100 % | 0,98 | 100 % | 95 % | 80 % | 100 % | 100 % | 100 % | 2 947 | 9,05 |
 
 **À retenir**
 - Le **RAG** fait passer l'exactitude de 55 % à 95 % et l'abstention de 60 % à 100 % : sans documents,
@@ -28,6 +28,10 @@ Tableau produit par `python eval.py` sur les 42 cas de `data/tests.jsonl`
   ~4 fois plus de tokens que le RAG et d'une latence environ 2 fois plus élevée.
 - La seule erreur du RAG (« J'étudie en Guadeloupe… ») vient d'un écart de vocabulaire avec la fiche
   (« outre-mer ») ; l'agent la corrige en reformulant sa recherche.
+- L'**extension (reranking)** place plus souvent la bonne fiche en tête (MRR 0,94 → 0,98) mais
+  n'améliore pas les réponses, déjà à 100 %, et ajoute ~1,5 s par requête. Elle introduit même une
+  régression d'abstention (question sur le DSE 2027 : la fiche 2026, très proche, est prise pour la
+  réponse). Sur ce corpus de petite taille, elle n'est donc pas rentable.
 
 | Niveau | Contenu |
 |---|---|
